@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>과제 평가 보드 (참가자용 / AX, Light Gray - Full Width)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* (생략– 기존 디자인 동일) */
+    /* ... 기존 CSS 그대로 유지 ... */
+  </style>
+</head>
+<body>
+  <header>
+    <h1>과제 평가 보드</h1>
+    <div class="sub">팀/이름 입력 → 드래그&드롭하여 High/Medium/Low 영역에 배치 → <strong>우측 상단의 제출 버튼 클릭</strong></div>
+  </header>
+
+  <div class="wrap">
+    <!-- 입력 폼 -->
+    <div class="form">
+      <div class="input">
+        <label for="team">팀</label>
+        <input id="team" type="text" placeholder="예: 마케팅팀" required />
+      </div>
+      <div class="input">
+        <label for="name">이름</label>
+        <input id="name" type="text" placeholder="예: 홍길동" required />
+      </div>
+      <button id="submitBtn" class="btn">제출</button>
+    </div>
+    <div id="msg" class="note">※ 모든 과제를 분류한 후 <strong>제출</strong>을 클릭해주세요. (새로고침 시 초기화)</div>
+
+    <!-- 보드 (생략: 기존 동일) -->
+
+  </div>
+
+  <script>
+    /* =========================
+       Netlify Functions Webhook 사용
+       ========================= */
+
+    // 🔥 여기만 변경됨!!
+    const WEBHOOK_URL = '/.netlify/functions/sendmail';
+
+    /* =========================
+       (아래는 기존과 동일)
+       ========================= */
+
+    const TITLES = [
+      "A1_AI기반 마케팅 효과 탐지/측정 자동화 및 MMM(성과 분석)",
+      "A2_AI 생성 기반 마케팅 기획안 자동 생성·추천 엔진",
+      "A3_가상고객 기반 마케팅 시나리오 시뮬레이션 AI",
+      "A4_투숙객/예약 정보 연계 기반 객실 정비 우선순위 및 스케줄링 최적화",
+      "A5_실시간 보안 모니터링 및 이상징후 탐지 인텔리전스",
+      "A6_ML 기반 매출 이상 탐지 및 원인 파악 인사이트 도출",
+      "B1_운반/청소 로보틱스 PoC",
+      "B2_위험/고난도 작업 수행 및 비전AI 품질 검사 PoC",
+      "C1_신규호텔개발 위한 AI기반 Market Intelligence",
+      "C2_신규호텔개발 AI 타당성 분석 및 시뮬레이션",
+      "C3_AI 기반 상품기획 리서치 인사이트 발굴",
+      "C4_AI 기반 멤버십 경쟁사 비교·분석 리서치",
+      "C5_멤버십 정책·약관 분석 Copilot",
+      "C6_B2B 수요 발굴 및 고가치 타겟 고객사 선정 인텔리전스",
+      "D1_AI/AR 기반 글로벌 및 현장 교육·학습 지원",
+      "D2_리스크/컴플라이언스 검토 위한 Archive AI 설계",
+      "D3_법무/계약 조항 식별 및 현지화 Copilot",
+      "E1_ML 기반 고객문의 분류 및 응답 매핑 자동화",
+      "E2_실시간 AI 상담 가이드 (자막, 응대스크립트, 다국어, 가드레일)",
+      "F1_AI 기반 터치포인트(디바이스) 확장 및 고도화",
+      "F2_AI 컨시어지 (응답형-개인화/실행형-자율형 순차 고도화)",
+      "G1_AI 분석 기반 고객 세그먼테이션 및 맞춤형 오퍼 생성",
+      "G2_고객 E2E 여정 기반 초개인화 호텔 경험 제공 AI",
+      "G3_AEO·GEO 기반 호텔 검색·추천·지식 경험 최적화",
+      "H1_설비 검침·공조 설비 자율 제어·에너지 최적화 AI (비용 배부 자동화 포함)",
+      "H2_공사 예가 산출 자동화 AI",
+      "H3_ITSM/보안포털 예외·티켓 자동 처리 AI",
+      "H4_전표 생성 및 처리 자동화",
+      "H5_ML 기반 소모품 수요예측 및 발주 자동화",
+      "H6_고객 안내용 컨텐츠 AI생성 및 품의 생성 자동화 (연회/레스토랑/부대시설 등)",
+      "H7_프로퍼티별 이슈/이벤트 요약 및 보도자료 주제 추천",
+      "H8_상품/서비스 문의 요약 기반 견적 생성 자동화 (B2B 영업 대상)",
+      "H9_주요 경쟁사 및 자사 보도자료 기반 보고문서 생성 AI",
+      "H10_부정 이슈 관련 내/외부 조치 업무 제안(문서초안 자동 생성)",
+      "H11_체크리스트 및 업무 추적관리 워크플로우",
+      "H12_개인정보보호 인식 제고용 뉴스레터 AI 콘텐츠 제작"
+    ];
+
+    let state = {
+      tasks: [],
+      assign: {
+        impact: { Unassigned: [], High: [], Medium: [], Low: [] },
+        feasibility: { Unassigned: [], High: [], Medium: [], Low: [] },
+      }
+    };
+
+    function buildTasks(){
+      const arr = [];
+      for(let i=1;i<=36;i++){
+        const id = "AX" + String(i).padStart(2,"0");
+        const title = TITLES[i-1] ? TITLES[i-1].trim() : `과제 ${String(i).padStart(2,"0")}`;
+        arr.push({ id, title });
+      }
+      return arr;
+    }
+
+    function init(){
+      state.tasks = buildTasks();
+      const ids = state.tasks.map(t=>t.id);
+      state.assign.impact.Unassigned = [...ids];
+      state.assign.feasibility.Unassigned = [...ids];
+      render();
+      wireDnD();
+      document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+    }
+
+    /* ========================= 제출 처리 ========================= */
+
+    function computeItems() {
+      return state.tasks.map(t => {
+        const norm = v => (v === 'Unassigned' ? '' : v);
+        return {
+          projectId: t.id,
+          projectTitle: t.title,
+          impact: norm(getLevel("impact", t.id)),
+          feasibility: norm(getLevel("feasibility", t.id))
+        };
+      });
+    }
+
+    function handleSubmit(){
+      const team = document.getElementById("team").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const btn = document.getElementById("submitBtn");
+      const msg = document.getElementById("msg");
+
+      if(!team || !name){
+        msg.innerHTML = '<span class="err">팀과 이름을 입력해 주세요.</span>';
+        return;
+      }
+
+      const sessionId = new Date().toISOString().slice(0,10) + "-" + Math.random().toString(36).slice(2,7);
+      const items = computeItems();
+
+      const payload = { team, name, sessionId, items };
+
+      btn.disabled = true;
+      btn.textContent = "제출 중...";
+      msg.innerHTML = '<span class="note">제출 중입니다...</span>';
+
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(async(res)=>{
+        if(!res.ok){
+          const t = await res.text().catch(()=> "");
+          throw new Error("HTTP "+res.status+" "+t);
+        }
+        msg.innerHTML = '<span class="ok">제출 완료! 감사합니다.</span>';
+        btn.textContent = "제출 완료";
+      })
+      .catch(err=>{
+        console.error(err);
+        msg.innerHTML = '<span class="err">제출 실패. 네트워크/권한 확인 후 다시 시도하세요.</span>';
+        btn.disabled = false;
+        btn.textContent = "제출";
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
