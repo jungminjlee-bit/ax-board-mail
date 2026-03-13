@@ -1,0 +1,223 @@
+{
+  "team": "pwc",
+  "name": "이정민",
+  "timestamp": "2026-03-13T11:43:17.473Z",
+  "data": [
+    {
+      "projectId": "AX01",
+      "projectTitle": "A1_AI기반 마케팅 효과 탐지/측정 자동화 및 MMM(성과 분석)",
+      "impact": "High",
+      "feasibility": "Medium"
+    },
+    {
+      "projectId": "AX02",
+      "projectTitle": "A2_AI 생성 기반 마케팅 기획안 자동 생성·추천 엔진",
+      "impact": "Medium",
+      "feasibility": "Medium"
+    },
+    {
+      "projectId": "AX03",
+      "projectTitle": "A3_가상고객 기반 마케팅 시나리오 시뮬레이션 AI",
+      "impact": "Low",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX04",
+      "projectTitle": "A4_투숙객/예약 정보 연계 기반 객실 정비 우선순위 및 스케줄링 최적화",
+      "impact": "High",
+      "feasibility": "Medium"
+    },
+    {
+      "projectId": "AX05",
+      "projectTitle": "A5_실시간 보안 모니터링 및 이상징후 탐지 인텔리전스",
+      "impact": "Medium",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX06",
+      "projectTitle": "A6_ML 기반 매출 이상 탐지 및 원인 파악 인사이트 도출",
+      "impact": "Low",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX07",
+      "projectTitle": "B1_운반/청소 로보틱스 PoC",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX08",
+      "projectTitle": "B2_위험/고난도 작업 수행 및 비전AI 품질 검사 PoC",
+      "impact": "Medium",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX09",
+      "projectTitle": "C1_신규호텔개발 위한 AI기반 Market Intelligence",
+      "impact": "Low",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX10",
+      "projectTitle": "C2_신규호텔개발 AI 타당성 분석 및 시뮬레이션",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX11",
+      "projectTitle": "C3_AI 기반 상품기획 리서치 인사이트 발굴",
+      "impact": "Medium",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX12",
+      "projectTitle": "C4_AI 기반 멤버십 경쟁사 비교·분석 리서치",
+      "impact": "Low",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX13",
+      "projectTitle": "C5_멤버십 정책·약관 분석 Copilot",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX14",
+      "projectTitle": "C6_B2B 수요 발굴 및 고가치 타겟 고객사 선정 인텔리전스",
+      "impact": "Medium",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX15",
+      "projectTitle": "D1_AI/AR 기반 글로벌 및 현장 교육·학습 지원",
+      "impact": "Low",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX16",
+      "projectTitle": "D2_리스크/컴플라이언스 검토 위한 Archive AI 설계",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX17",
+      "projectTitle": "D3_법무/계약 조항 식별 및 현지화 Copilot",
+      "impact": "Medium",
+      "feasibility": "Medium"
+    },
+    {
+      "projectId": "AX18",
+      "projectTitle": "E1_ML 기반 고객문의 분류 및 응답 매핑 자동화",
+      "impact": "Low",
+      "feasibility": "Medium"
+    },
+    {
+      "projectId": "AX19",
+      "projectTitle": "E2_실시간 AI 상담 가이드",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX20",
+      "projectTitle": "F1_AI 기반 터치포인트 확장 및 고도화",
+      "impact": "Medium",
+      "feasibility": "Low"
+    },
+    {
+      "projectId": "AX21",
+      "projectTitle": "F2_AI 컨시어지",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX22",
+      "projectTitle": "G1_AI 분석 기반 고객 세그먼테이션 및 맞춤형 오퍼 생성",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX23",
+      "projectTitle": "G2_고객 E2E 여정 기반 초개인화 호텔 경험 제공 AI",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX24",
+      "projectTitle": "G3_AEO·GEO 기반 호텔 검색·추천·지식 경험 최적화",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX25",
+      "projectTitle": "H1_설비 검침·공조 제어·에너지 최적화 AI",
+      "impact": "Low",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX26",
+      "projectTitle": "H2_공사 예가 산정 자동화 AI",
+      "impact": "High",
+      "feasibility": "Medium"
+    },
+    {
+      "projectId": "AX27",
+      "projectTitle": "H3_ITSM/보안포털 자동 처리 AI",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX28",
+      "projectTitle": "H4_전표 생성 및 처리 자동화",
+      "impact": "High",
+      "feasibility": "Medium"
+    },
+    {
+      "projectId": "AX29",
+      "projectTitle": "H5_ML 기반 소모품 수요예측 및 발주 자동화",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX30",
+      "projectTitle": "H6_고객 안내용 컨텐츠 AI생성 및 품의 생성 자동화",
+      "impact": "Medium",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX31",
+      "projectTitle": "H7_프로퍼티별 이슈/이벤트 요약 및 보도자료 주제 추천",
+      "impact": "Low",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX32",
+      "projectTitle": "H8_상품/서비스 문의 요약 기반 견적 생성 자동화 (B2B 영업 대상)",
+      "impact": "Medium",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX33",
+      "projectTitle": "H9_주요 경쟁사 및 자사 보도자료 기반 보고문서 생성 AI",
+      "impact": "Medium",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX34",
+      "projectTitle": "H10_부정 이슈 관련 내/외부 조치 업무 제안(문서초안 자동 생성)",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX35",
+      "projectTitle": "H11_체크리스트 및 업무 추적관리 워크플로우",
+      "impact": "High",
+      "feasibility": "High"
+    },
+    {
+      "projectId": "AX36",
+      "projectTitle": "H12_개인정보보호 인식 제고용 뉴스레터 AI 콘텐츠 제작",
+      "impact": "High",
+      "feasibility": "High"
+    }
+  ]
+}
