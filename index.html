@@ -9,10 +9,11 @@
     :root {
       --bg:#f7f7f7; --panel:#fff; --border:#ccc; --blue:#0078ff;
       --muted:#555; --ok:#0a7f2e; --err:#d20000;
-      /* 카드 회색 팔레트 */
-      --card-bg:#f0f2f5;
-      --card-border:#cfd4da;
-      --card-text:#2b2f33;
+      --card-bg:#f0f2f5; --card-border:#cfd4da; --card-text:#2b2f33;
+
+      /* Sticky 오프셋 (JS가 런타임에 세팅) */
+      --sticky-top: 64px;     /* 페이지 header 높이 */
+      --board-title-h: 40px;  /* 각 보드 h2 높이(공통 가정) */
     }
     *{ box-sizing:border-box; }
     body{
@@ -20,10 +21,12 @@
       font:15px/1.45 system-ui, Segoe UI, Roboto, 'Noto Sans KR', sans-serif;
       color:#222;
     }
+
+    /* 페이지 상단 고정 헤더 */
     header{
       padding:18px 22px; background:#fff;
       border-bottom:1px solid var(--border);
-      position:sticky; top:0; z-index:10;
+      position:sticky; top:0; z-index:100;
     }
     header h1{ margin:0 0 6px; font-size:22px; font-weight:700; }
     header .sub{ color:var(--muted); font-size:14px; }
@@ -59,23 +62,35 @@
     /* 보드 패널 */
     .board{
       background:#fff; border:1px solid var(--border);
-      border-radius:10px; overflow:hidden;
+      border-radius:10px;
+      overflow:visible; /* sticky 요소 보이도록 */
     }
+
+    /* ★ 보드 제목(h2)도 sticky 고정 */
     .board h2{
       margin:0; padding:10px 14px;
       font-size:17px; border-bottom:1px solid var(--border);
       background:#fafafa; display:flex; align-items:center; gap:8px;
+      position: sticky;
+      top: var(--sticky-top);     /* 페이지 header 바로 아래 고정 */
+      z-index: 30;                /* 열 헤더보다 위 */
+      box-shadow: 0 1px 0 rgba(0,0,0,0.03);
     }
 
-    /* 4칸 */
+    /* 4칸 그리드 */
     .levels{ display:grid; grid-template-columns:repeat(4,1fr); }
-
-    .level{ border-right:1px solid var(--border); }
+    .level{ border-right:1px solid var(--border); position:relative; }
     .level:last-child{ border-right:none; }
+
+    /* ★ 각 열 헤더(head)도 sticky: 보드 제목 아래에 고정 */
     .head{
-      padding:8px 10px; display:flex; justify-content:center; align-items:center; gap:8px;
-      border-bottom:1px solid var(--border);
-      background:#fcfcfc; font-weight:600; font-size:14px; text-align:center;
+      display:flex; justify-content:center; align-items:center; gap:8px;
+      padding:8px 10px; font-weight:600; font-size:14px; text-align:center;
+      border-bottom:1px solid var(--border); background:#fcfcfc;
+      position: sticky;
+      top: calc(var(--sticky-top) + var(--board-title-h));
+      z-index: 20;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.02);
     }
 
     /* 카운터 배지 */
@@ -90,20 +105,20 @@
       min-height:220px; padding:10px;
       display:flex; flex-direction:column; gap:8px;
       background:#fff;
-      /* 드래그 하이라이트(점선) 의도적으로 없음 */
     }
 
     /* 카드 */
     .card{
       padding:8px 10px;
-      background:var(--card-bg, #f0f2f5);
-      border:1px solid var(--card-border, #cfd4da);
+      background:var(--card-bg);
+      border:1px solid var(--card-border);
       border-radius:6px;
-      color:var(--card-text, #2b2f33);
+      color:var(--card-text);
       cursor:grab; user-select:none;
       box-shadow:none;
     }
     .card:active{ cursor:grabbing; }
+    .card.dragging{ opacity:.85; }
     .id{ font-weight:700; margin-right:6px; color:#222; }
 
     @media (max-width: 1100px){
@@ -116,7 +131,7 @@
 <header>
   <h1>과제 평가 보드</h1>
   <div class="sub">
-    팀/이름 입력 → 카드를 드래그해서 영역에 <strong>들어가기만 해도</strong> 배치됨 → <strong>제출</strong>
+    팀/이름 입력 → 카드를 드래그해서 각 헤더 아래 영역에 <strong>드롭</strong>하면 배치 → <strong>제출</strong>
   </div>
 </header>
 
@@ -126,7 +141,7 @@
   <div class="form">
     <div class="input">
       <label for="team">팀</label>
-      <input id="team" placeholder="예: 마케팅팀" />
+      <input id="team" placeholder="예: DX팀" />
     </div>
     <div class="input">
       <label for="name">이름</label>
@@ -218,6 +233,23 @@
 
 <script>
 /* ===================================
+   0) Sticky 오프셋 동적 계산
+=================================== */
+function setStickyOffsets(){
+  const pageHeader = document.querySelector('header');
+  const headerH = pageHeader ? pageHeader.offsetHeight : 0;
+  document.documentElement.style.setProperty('--sticky-top', headerH + 'px');
+
+  // 첫 번째 보드의 h2 높이 기준(두 보드 동일 가정)
+  const firstH2 = document.querySelector('.board h2');
+  const h2H = firstH2 ? firstH2.offsetHeight : 0;
+  document.documentElement.style.setProperty('--board-title-h', h2H + 'px');
+}
+window.addEventListener('load', setStickyOffsets);
+window.addEventListener('resize', setStickyOffsets);
+window.addEventListener('load', () => setTimeout(setStickyOffsets, 200));
+
+/* ===================================
    1) Netlify Function endpoint
 =================================== */
 const WEBHOOK_URL = '/.netlify/functions/save-to-github';
@@ -272,8 +304,38 @@ let state = {
   }
 };
 
-// 현재 드래그 중인 카드 ID를 추적
+// 드래그 상태
 let draggingId = null;
+let draggingEl = null;
+let lastDropZone = null;
+let draggingGroup = null;
+
+// 카드 크기 & 커서 오프셋(드래그 시작 시 기록)
+let dragMeta = { w:0, h:0, offX:0, offY:0 };
+
+/* ===================================
+   유틸 (정렬/부분 렌더)
+=================================== */
+const idNum = id => parseInt(String(id).replace(/\D+/g,''),10) || 0;
+function sortById(arr){
+  // 중복 제거 + 정렬
+  const seen = new Set();
+  const unique = [];
+  for(const x of arr){ if(!seen.has(x)){ seen.add(x); unique.push(x); } }
+  unique.sort((a,b)=> idNum(a) - idNum(b));
+  arr.length = 0; arr.push(...unique);
+}
+
+function renderLevel(group, level){
+  const drop = document.querySelector(`.drop[data-group="${group}"][data-level="${level}"]`);
+  if (!drop) return;
+  drop.innerHTML = '';
+  const list = state.assign[group][level];
+  list.forEach(id=>{
+    const t = state.tasks.find(x=>x.id===id);
+    drop.appendChild(createCard(t));
+  });
+}
 
 /* ===================================
    3) 초기 데이터 구성
@@ -295,22 +357,8 @@ function getLevel(group,id){
 }
 
 /* ===================================
-   4) 드래그 보드 렌더링 + 카운트 업데이트
+   4) 카드 DOM 생성
 =================================== */
-function moveTo(group,level,id){
-  const g=state.assign[group];
-  // 이미 해당 레벨이면 스킵 (불필요한 재렌더 방지)
-  if (g[level].includes(id)) return;
-
-  // 다른 레벨들에서 제거
-  for(const lv of Object.keys(g)){
-    const idx=g[lv].indexOf(id);
-    if(idx>=0) g[lv].splice(idx,1);
-  }
-  g[level].push(id);
-  render();
-}
-
 function createCard(t){
   const el=document.createElement("div");
   el.className="card";
@@ -320,56 +368,167 @@ function createCard(t){
 
   el.addEventListener("dragstart",e=>{
     draggingId = t.id;
-    // 데이터 전송도 세팅(브라우저 호환성용)
+    draggingEl = el;
+    lastDropZone = null;
+    const board = el.closest('.board');
+    draggingGroup = board ? board.dataset.group : null;
+
+    // 카드 실제 크기 및 '마우스가 찍힌 지점' 오프셋 기록
+    const r = el.getBoundingClientRect();
+    const cx = e.clientX ?? (r.left + r.width/2);
+    const cy = e.clientY ?? (r.top  + r.height/2);
+    dragMeta.w = r.width;
+    dragMeta.h = r.height;
+    dragMeta.offX = cx - r.left;
+    dragMeta.offY = cy - r.top;
+
+    el.classList.add("dragging");
     e.dataTransfer.setData("text/plain", t.id);
+    try { e.dataTransfer.effectAllowed = 'move'; } catch(_){}
+    try { if (e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(el, dragMeta.offX, dragMeta.offY); } catch(_){}
   });
+
   el.addEventListener("dragend",()=>{
+    // 드롭 이벤트 누락 시 마지막 진입 존으로 확정
+    if (lastDropZone && draggingId) {
+      moveTo(lastDropZone.dataset.group, lastDropZone.dataset.level, draggingId);
+    }
     draggingId = null;
+    draggingEl = null;
+    lastDropZone = null;
+    draggingGroup = null;
+    dragMeta = { w:0, h:0, offX:0, offY:0 };
+    el.classList.remove("dragging");
   });
 
   return el;
 }
 
-function render(){
+/* ===================================
+   5) 상태 업데이트 + 정렬 + 부분 렌더
+=================================== */
+function moveTo(group, level, id){
+  const g=state.assign[group];
+  const prevLevel = getLevel(group, id);
+
+  // 모든 레벨에서 제거
+  for(const lv of Object.keys(g)){
+    const i = g[lv].indexOf(id);
+    if(i>=0) g[lv].splice(i,1);
+  }
+
+  // 목표 레벨에 추가 후 정렬
+  g[level].push(id);
+  sortById(g[level]);
+
+  // DOM: 이전/목표 레벨만 부분 렌더
+  if (prevLevel) renderLevel(group, prevLevel);
+  renderLevel(group, level);
+
+  updateCounts();
+}
+
+/* ===================================
+   6) 최초 렌더
+=================================== */
+function renderInitial(){
   document.querySelectorAll(".drop").forEach(el=>el.innerHTML="");
   ["impact","feasibility"].forEach(group=>{
     Object.keys(state.assign[group]).forEach(level=>{
-      const drop=document.querySelector(`.drop[data-group="${group}"][data-level="${level}"]`);
-      state.assign[group][level].forEach(id=>{
-        const t=state.tasks.find(x=>x.id===id);
-        drop.appendChild(createCard(t));
-      });
+      renderLevel(group, level);
     });
   });
   updateCounts();
 }
 
+/* ===================================
+   7) 히트테스트 (드롭 순간 '카드 몸'의 가로 겹침 길이 기준)
+=================================== */
+function getDragRectAt(clientX, clientY){
+  const left = clientX - dragMeta.offX;
+  const top  = clientY - dragMeta.offY;
+  return { left, top, right:left + dragMeta.w, bottom:top + dragMeta.h, width:dragMeta.w, height:dragMeta.h };
+}
+function getRect(el){
+  const r = el.getBoundingClientRect();
+  return { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height };
+}
+function overlapWidth(a,b){
+  return Math.max(0, Math.min(a.right,b.right) - Math.max(a.left,b.left));
+}
+function centerX(r){ return r.left + r.width/2; }
+
+function pickBestDropZoneByXOverlap(clientX, clientY){
+  if (!draggingGroup) return null;
+  const zones = Array.from(document.querySelectorAll(`.drop[data-group="${draggingGroup}"]`));
+  if (zones.length === 0) return null;
+
+  const dragRect = getDragRectAt(clientX, clientY);
+
+  let best = null;
+  let bestW = -1;
+
+  for (const z of zones){
+    const zr = getRect(z);
+    const w = overlapWidth(dragRect, zr); // ★ 가로 겹침 길이
+    if (w > bestW){
+      bestW = w;
+      best = z;
+    }
+  }
+
+  if (bestW > 0) return best;
+
+  // 전부 0이면: 가로 중심 가장 가까운 칸으로 보정
+  zones.sort((a,b)=>{
+    const ra = getRect(a), rb = getRect(b);
+    const da = Math.abs(centerX(ra) - (dragRect.left + dragRect.width/2));
+    const db = Math.abs(centerX(rb) - (dragRect.left + dragRect.width/2));
+    return da - db;
+  });
+  return zones[0] || null;
+}
+
+/* ===================================
+   8) DnD 배선
+=================================== */
 function wireDnD(){
-  document.querySelectorAll(".drop").forEach(drop=>{
-    // 드롭 가능하도록 기본 동작 취소
-    drop.addEventListener("dragover",e=>{
-      e.preventDefault();
-      // 스타일 하이라이트는 의도적으로 없음
-    });
+  // 문서 레벨: 드롭 허용 및 최적 존 추적
+  document.addEventListener('dragover', e=>{
+    e.preventDefault();
+    try { if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; } catch(_){}
+    const best = pickBestDropZoneByXOverlap(e.clientX, e.clientY);
+    if (best) lastDropZone = best;
+  }, {capture:true});
 
-    // ⬇️ 핵심: '영역에 들어가기만 해도' 배치
-    drop.addEventListener("dragenter",e=>{
-      e.preventDefault();
-      const id = draggingId || e.dataTransfer?.getData("text/plain");
-      if(!id) return;
+  document.addEventListener('dragenter', e=>{
+    const zone = e.target.closest?.('.drop');
+    if (zone) lastDropZone = zone; // fallback
+  }, {capture:true});
 
-      const group = drop.dataset.group;
-      const level = drop.dataset.level;
-      // 현재 레벨과 다를 때만 이동 → 렌더링 최소화
-      if (getLevel(group, id) !== level) {
-        moveTo(group, level, id);
-      }
-    });
+  document.addEventListener('drop', e=>{
+    e.preventDefault();
+    const id = draggingId || e.dataTransfer?.getData('text/plain');
+    if (!id) return;
 
-    // 실제 drop에서는 아무 것도 하지 않아도 됨(이미 배치됨)
-    drop.addEventListener("drop",e=>{
+    const best = pickBestDropZoneByXOverlap(e.clientX, e.clientY) || lastDropZone;
+    if (best){
+      moveTo(best.dataset.group, best.dataset.level, id);
+      lastDropZone = null;
+    }
+  }, {capture:true});
+
+  // 각 컨테이너에도 직접 부착(브라우저별 안정성)
+  document.querySelectorAll('.drop').forEach(zone=>{
+    zone.addEventListener('dragover', e=>{ e.preventDefault(); });
+    zone.addEventListener('dragenter', ()=>{ lastDropZone = zone; });
+    zone.addEventListener('drop', e=>{
       e.preventDefault();
-      // no-op
+      const id = draggingId || e.dataTransfer?.getData('text/plain');
+      if (!id) return;
+      const best = pickBestDropZoneByXOverlap(e.clientX, e.clientY) || zone;
+      moveTo(best.dataset.group, best.dataset.level, id);
+      lastDropZone = null;
     });
   });
 }
@@ -390,7 +549,7 @@ function updateCounts(){
 }
 
 /* ===================================
-   5) 제출 → Git 저장 요청
+   9) 제출 → Git 저장 요청
 =================================== */
 async function handleSubmit(){
   const team=document.getElementById("team").value.trim();
@@ -403,7 +562,7 @@ async function handleSubmit(){
     return;
   }
 
-  // --- Unassigned 남아있으면 제출 금지 ---
+  // Unassigned 남아있으면 제출 금지
   const unassignedImpact = state.assign.impact.Unassigned.length;
   const unassignedFeas = state.assign.feasibility.Unassigned.length;
 
@@ -412,7 +571,7 @@ async function handleSubmit(){
     return;
   }
 
-  // 제출 데이터 구성
+  // 제출 데이터
   const items=state.tasks.map(t=>({
     projectId:t.id,
     projectTitle:t.title,
@@ -447,14 +606,17 @@ async function handleSubmit(){
 }
 
 /* ===================================
-   6) 초기화
+   10) 초기화
 =================================== */
 function init(){
-  state.tasks=buildTasks();
+  state.tasks = buildTasks();
   const ids = state.tasks.map(t=>t.id);
-  state.assign.impact.Unassigned=[...ids];
-  state.assign.feasibility.Unassigned=[...ids];
-  render();
+
+  // 기본값 세팅(정렬)
+  state.assign.impact.Unassigned=[...ids];       sortById(state.assign.impact.Unassigned);
+  state.assign.feasibility.Unassigned=[...ids];  sortById(state.assign.feasibility.Unassigned);
+
+  renderInitial();
   wireDnD();
   document.getElementById("submitBtn").addEventListener("click",handleSubmit);
 }
