@@ -9,7 +9,7 @@
     :root {
       --bg:#f7f7f7; --panel:#fff; --border:#ccc; --blue:#0078ff;
       --muted:#555; --ok:#0a7f2e; --err:#d20000;
-      /* ⬇️ 카드 회색 팔레트(추가) */
+      /* 카드 회색 팔레트 */
       --card-bg:#f0f2f5;
       --card-border:#cfd4da;
       --card-text:#2b2f33;
@@ -90,15 +90,13 @@
       min-height:220px; padding:10px;
       display:flex; flex-direction:column; gap:8px;
       background:#fff;
-    }
-    .drop.dragover{
-      outline:2px dashed var(--blue); background:#eaf2ff;
+      /* 드래그 하이라이트(점선) 의도적으로 없음 */
     }
 
-    /* ⬇️ 카드: 회색 톤 */
+    /* 카드 */
     .card{
       padding:8px 10px;
-      background:var(--card-bg, #f0f2f5);          /* fallback 포함 */
+      background:var(--card-bg, #f0f2f5);
       border:1px solid var(--card-border, #cfd4da);
       border-radius:6px;
       color:var(--card-text, #2b2f33);
@@ -118,7 +116,7 @@
 <header>
   <h1>과제 평가 보드</h1>
   <div class="sub">
-    팀/이름 입력 → 드래그&드롭하여 High/Medium/Low 배치 → <strong>제출</strong>
+    팀/이름 입력 → 카드를 드래그해서 영역에 <strong>들어가기만 해도</strong> 배치됨 → <strong>제출</strong>
   </div>
 </header>
 
@@ -138,7 +136,7 @@
   </div>
 
   <div id="msg" class="note">
-    ※ 모두 분류 후 제출을 클릭하세요.
+    ※ 모든 카드를 High/Medium/Low에 배치한 후 제출하세요.
   </div>
 
   <!-- 드래그 보드 -->
@@ -220,9 +218,9 @@
 
 <script>
 /* ===================================
-   1) save-to-git endpoint
+   1) Netlify Function endpoint
 =================================== */
-const WEBHOOK_URL = '/api/save';   // ← 네 엔드포인트로 설정!
+const WEBHOOK_URL = '/.netlify/functions/save-to-github';
 
 /* ===================================
    2) 과제 목록
@@ -274,16 +272,16 @@ let state = {
   }
 };
 
+// 현재 드래그 중인 카드 ID를 추적
+let draggingId = null;
+
 /* ===================================
    3) 초기 데이터 구성
 =================================== */
 function buildTasks(){
   const arr=[];
   for(let i=1;i<=36;i++){
-    arr.push({
-      id:"AX"+String(i).padStart(2,"0"),
-      title:TITLES[i-1]
-    });
+    arr.push({ id:"AX"+String(i).padStart(2,"0"), title:TITLES[i-1] });
   }
   return arr;
 }
@@ -301,6 +299,10 @@ function getLevel(group,id){
 =================================== */
 function moveTo(group,level,id){
   const g=state.assign[group];
+  // 이미 해당 레벨이면 스킵 (불필요한 재렌더 방지)
+  if (g[level].includes(id)) return;
+
+  // 다른 레벨들에서 제거
   for(const lv of Object.keys(g)){
     const idx=g[lv].indexOf(id);
     if(idx>=0) g[lv].splice(idx,1);
@@ -315,9 +317,16 @@ function createCard(t){
   el.draggable=true;
   el.dataset.id=t.id;
   el.innerHTML=`<span class="id">${t.id}</span>${t.title}`;
+
   el.addEventListener("dragstart",e=>{
-    e.dataTransfer.setData("text",t.id);
+    draggingId = t.id;
+    // 데이터 전송도 세팅(브라우저 호환성용)
+    e.dataTransfer.setData("text/plain", t.id);
   });
+  el.addEventListener("dragend",()=>{
+    draggingId = null;
+  });
+
   return el;
 }
 
@@ -332,21 +341,35 @@ function render(){
       });
     });
   });
-  updateCounts(); // ← 렌더 후 카운터 갱신
+  updateCounts();
 }
 
 function wireDnD(){
   document.querySelectorAll(".drop").forEach(drop=>{
+    // 드롭 가능하도록 기본 동작 취소
     drop.addEventListener("dragover",e=>{
       e.preventDefault();
-      drop.classList.add("dragover");
+      // 스타일 하이라이트는 의도적으로 없음
     });
-    drop.addEventListener("dragleave",()=>drop.classList.remove("dragover"));
+
+    // ⬇️ 핵심: '영역에 들어가기만 해도' 배치
+    drop.addEventListener("dragenter",e=>{
+      e.preventDefault();
+      const id = draggingId || e.dataTransfer?.getData("text/plain");
+      if(!id) return;
+
+      const group = drop.dataset.group;
+      const level = drop.dataset.level;
+      // 현재 레벨과 다를 때만 이동 → 렌더링 최소화
+      if (getLevel(group, id) !== level) {
+        moveTo(group, level, id);
+      }
+    });
+
+    // 실제 drop에서는 아무 것도 하지 않아도 됨(이미 배치됨)
     drop.addEventListener("drop",e=>{
       e.preventDefault();
-      drop.classList.remove("dragover");
-      const id=e.dataTransfer.getData("text");
-      moveTo(drop.dataset.group,drop.dataset.level,id);
+      // no-op
     });
   });
 }
@@ -380,6 +403,16 @@ async function handleSubmit(){
     return;
   }
 
+  // --- Unassigned 남아있으면 제출 금지 ---
+  const unassignedImpact = state.assign.impact.Unassigned.length;
+  const unassignedFeas = state.assign.feasibility.Unassigned.length;
+
+  if (unassignedImpact > 0 || unassignedFeas > 0) {
+    msg.innerHTML = '<span class="err">⚠️ 모든 카드를 High / Medium / Low 중 하나에 배치해야 제출할 수 있습니다.</span>';
+    return;
+  }
+
+  // 제출 데이터 구성
   const items=state.tasks.map(t=>({
     projectId:t.id,
     projectTitle:t.title,
@@ -387,11 +420,7 @@ async function handleSubmit(){
     feasibility:getLevel("feasibility",t.id)
   }));
 
-  const payload={
-    team,name,
-    timestamp:new Date().toISOString(),
-    data:items
-  };
+  const payload={ team,name, timestamp:new Date().toISOString(), data:items };
 
   btn.disabled=true;
   btn.textContent="저장 중...";
@@ -403,7 +432,8 @@ async function handleSubmit(){
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
-    if(!res.ok) throw new Error(res.status);
+    const json = await res.json().catch(()=> ({}));
+    if(!res.ok) throw new Error(json.error || res.status);
 
     msg.innerHTML='<span class="ok">Git 저장 완료!</span>';
     btn.textContent="저장 완료";
